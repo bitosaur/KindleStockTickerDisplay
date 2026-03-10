@@ -1,0 +1,31 @@
+services:
+  stock-ticker:
+    build: .
+    container_name: kindle-stock-ticker
+    ports:
+      - "5001:5001"
+    environment:
+      # ── Finnhub API ────────────────────────────────────────────────────
+      # ⚠ If this repo is public on GitHub, do NOT commit a real key here.
+      #   Use a private repo, or set this via a CI/CD secret instead.
+      FINNHUB_API_KEY: "d6b5l6hr01qnr27jp09gd6b5l6hr01qnr27jp0a0"
+      # ── Tickers ────────────────────────────────────────────────────────
+      # Primary ticker shown large at the top
+      MAIN_TICKER: "TSLA"
+      # All tickers (main + up to 7 others). MAIN_TICKER is excluded from
+      # the secondary list automatically. Extras beyond 7 are ignored.
+      TICKERS: "SPY,AAPL,MSFT,GOOGL,AMZN,META,TSLA,NVDA"
+
+      # ── Refresh ────────────────────────────────────────────────────────
+      # Seconds between browser page reload and Finnhub API poll
+      REFRESH_INTERVAL: "300"
+
+      # ── Market hours (Eastern Time, 24-hour format) ────────────────────
+      # Finnhub API is only called on weekdays within this window.
+      # Holidays are NOT automatically excluded.
+      MARKET_OPEN: "09:30"
+      MARKET_CLOSE: "16:00"
+
+      # ── Server port (must match the container port in 'ports' above) ───
+      PORT: "5001"
+    restart: unless-stopped

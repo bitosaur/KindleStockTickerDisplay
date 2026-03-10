@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"dir /a \"\"C:\\\\Users\\\\SitoSarkar\\\\OneDrive - Pricing Platform\\\\Admin\\\\Documents\\\\Git\\\\tickerDisplayPage\"\"\")",
+      "Bash(Get-ChildItem -Force \"C:\\\\Users\\\\SitoSarkar\\\\OneDrive - Pricing Platform\\\\Admin\\\\Documents\\\\Git\\\\tickerDisplayPage\")",
+      "Bash(Select-Object Name)"
+    ]
+  }
+}

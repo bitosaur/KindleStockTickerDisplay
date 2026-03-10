@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="{{ refresh_interval }}">
+  <title>Stocks</title>
+  <style>
+    /* ── Base ─────────────────────────────────────────────── */
+    body {
+      font-family: serif;
+      margin: 8px 12px;
+      padding: 0;
+      background: #fff;
+      color: #000;
+    }
+
+    /* ── Main ticker block ───────────────────────────────── */
+    .main-block {
+      text-align: center;
+      padding: 10px 0 6px;
+    }
+    .main-sym {
+      font-size: 44px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    /* Main price is 3x the font size used for other-ticker rows (36px) */
+    .main-price {
+      font-size: 108px;
+      font-weight: bold;
+      line-height: 1.15;
+    }
+    .main-chg {
+      font-size: 40px;
+      margin-top: 2px;
+    }
+
+    /* ── Dividers ────────────────────────────────────────── */
+    hr {
+      border: none;
+      border-top: 1px solid #000;
+      margin: 6px 0;
+    }
+
+    /* ── Other-tickers table ─────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    tr {
+      border-bottom: 1px solid #ccc;
+    }
+    tr:last-child {
+      border-bottom: none;
+    }
+    td {
+      font-size: 36px;
+      padding: 2px 2px;
+      vertical-align: middle;
+    }
+    .col-sym   { width: 20%; font-weight: bold; }
+    .col-price { width: 28%; text-align: right; }
+    .col-chg   { width: 52%; text-align: right; }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    .footer {
+      font-size: 24px;
+      text-align: center;
+      margin-top: 6px;
+      padding-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Main Ticker ──────────────────────────────────────── -->
+  <div class="main-block">
+    <div class="main-sym">{{ main_ticker }}</div>
+
+    {% if quotes and main_ticker in quotes %}
+      {% set mq = quotes[main_ticker] %}
+      <div class="main-price">{{ mq.price | f2 }}</div>
+      <div class="main-chg">
+        {% if mq.change >= 0 %}+{% endif %}{{ mq.change | f2 }}
+        &nbsp;&nbsp;
+        ({% if mq.pct_change >= 0 %}+{% endif %}{{ mq.pct_change | f2 }}%)
+      </div>
+    {% else %}
+      <div class="main-price">&#8212;&#8212;</div>
+      <div class="main-chg">No data</div>
+    {% endif %}
+  </div>
+
+  <hr>
+
+  <!-- ── Other Tickers ────────────────────────────────────── -->
+  <table>
+    {% for ticker in other_tickers %}
+      {% if ticker in quotes %}
+        {% set q = quotes[ticker] %}
+        <tr>
+          <td class="col-sym">{{ ticker }}</td>
+          <td class="col-price">{{ q.price | f2 }}</td>
+          <td class="col-chg">
+            {% if q.change >= 0 %}+{% endif %}{{ q.change | f2 }}&nbsp;({% if q.pct_change >= 0 %}+{% endif %}{{ q.pct_change | f2 }}%)
+          </td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+
+  <hr>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <div class="footer">
+    {{ last_update }}{% if not market_open %} &bull; Market Closed{% endif %}
+  </div>
+
+</body>
+</html>

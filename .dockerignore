@@ -1,0 +1,27 @@
+# Version control
+.git
+.gitignore
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / OS artefacts
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Docs (not needed at runtime)
+README.md
