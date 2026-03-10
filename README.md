@@ -6,6 +6,12 @@ Designed for the **Amazon Kindle 3 (Keyboard)** browser, which renders basic HTM
 
 ---
 
+## Gallery
+
+![Kindle Stock Ticker running on a Kindle 3 Keyboard](screenshots/kindle-stock-ticker.jpg)
+
+---
+
 ## Features
 
 - **Main ticker** displayed in large type (3× the font size of secondary tickers)
@@ -209,6 +215,8 @@ git push
 ├── app.py                  # Flask server – cache, Finnhub client, route
 ├── templates/
 │   └── index.html          # Kindle-compatible HTML template (no JS)
+├── screenshots/
+│   └── kindle-stock-ticker.jpg  # Gallery photo
 ├── requirements.txt        # Python dependencies
 ├── Dockerfile              # Single-stage Python 3.11-slim image
 ├── docker-compose.yml      # Compose service definition + ALL configuration
