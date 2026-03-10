@@ -139,6 +139,38 @@ The server starts at `http://localhost:5001`.
 > **Tip:** If you run the Docker container on a Raspberry Pi or a NAS on your local network, the Kindle can display stock data continuously with no PC required.
 
 ---
+## Keeping the Kindle Gen 3 screen awake
+
+By default the Kindle goes to screensaver after a few minutes, interrupting the display. Use the hidden **`~ds` (disable screensaver)** command to prevent this.
+
+### Steps
+
+1. Go to the **Home screen**.
+2. Using the keyboard, type **`~ds`** — it will appear in the search bar.
+3. Press **Enter** (select "Search everywhere" or similar if prompted).
+4. The screen may flicker briefly. The Kindle will no longer enter screensaver mode.
+
+### Important limitations
+
+- **Resets on reboot.** The setting is lost whenever the Kindle restarts or the battery dies completely. You must re-enter `~ds` each time.
+- **Battery drain.** With the screen always on and Wi-Fi active for refreshing, battery drains faster than normal. **Keep the Kindle plugged in** while using it as a display.
+- **Older firmware only.** This command works on Kindle Gen 3 (Kindle Keyboard) and similarly aged devices. It does not work on newer Kindles.
+- **Magnetic cases.** If `~ds` seems to have no effect, check whether you are using a magnetic cover — the magnet can continuously trigger the sleep sensor and override the setting.
+
+### If `~ds` doesn't work — Debug Mode method
+
+Some firmware versions require Debug Mode to be active before the screensaver command is recognised.
+
+1. On the **Home screen**, type **`;debugOn`** into the search bar and press **Enter**.
+2. Type **`~disableScreensaver`** and press **Enter**.
+3. Optionally, type **`;debugOff`** and press **Enter** to exit debug mode.
+
+### Tip
+
+Set the Kindle's browser **bookmark** to `http://<your-server-ip>:5001` so it opens directly to the weather page after each reboot.
+
+---
+
 
 ## Publishing to GitHub
 
