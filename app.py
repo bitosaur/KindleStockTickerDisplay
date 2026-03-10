@@ -4,15 +4,15 @@ Serves a single Kindle-compatible HTML page showing stock quotes from Finnhub.
 
 Config is injected via environment variables defined in docker-compose.yml.
 For local development without Docker, export the variables in your shell.
-Quotes are cached in memory; the Finnhub API is called only during market hours
-and only when the cache is older than REFRESH_INTERVAL seconds.
+Quotes are cached in memory.  The Finnhub API is called at market open (+30 s),
+every REFRESH_INTERVAL seconds during trading hours, and once at market close.
 Run with a single Gunicorn worker to preserve the in-memory cache.
 """
 
 import os
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 from flask import Flask, render_template
@@ -39,6 +39,11 @@ OTHER_TICKERS = [t for t in _raw_tickers if t != MAIN_TICKER][:7]
 # NOTE: requires a single Gunicorn worker (--workers 1)
 _cache:    dict  = {}    # { "AAPL": {"price": 1.23, "change": 0.45, "pct_change": 0.38} }
 _cache_ts: float = 0.0   # Unix timestamp of last successful API fetch
+
+# Track the date of the forced at-open and at-close fetches so each fires
+# exactly once per trading day regardless of cache age.
+_open_fetch_date  = None  # date of last at-open  forced fetch
+_close_fetch_date = None  # date of last at-close forced fetch
 
 
 # ── Market-hours helper ────────────────────────────────────────────────────────
@@ -89,23 +94,63 @@ def _refresh_cache() -> None:
 
 def get_quotes() -> dict:
     """
-    Return quote data, calling the API only when appropriate:
-      - Always fetch if cache is empty (first start, even outside hours).
-      - Serve cache if it is still within the refresh window.
-      - Serve stale cache when market is closed (no API call).
-      - Refresh from API when market is open and cache has expired.
+    API call strategy (in priority order):
+
+      1. First start (empty cache) — fetch once regardless of time; seed
+         tracking dates so a restart mid-session doesn't double-fetch.
+      2. At-open fetch — fires once per weekday on the first request at or
+         after MARKET_OPEN + 30 s (the 30 s grace lets opening prices settle).
+      3. Normal intraday refresh — while market is open, refresh whenever the
+         cache is older than REFRESH_INTERVAL seconds.
+      4. At-close fetch — fires once per weekday on the first request at or
+         after MARKET_CLOSE, capturing the official closing price.
+      5. All other times — serve the stale cache with no API call.
     """
-    cache_age = time.time() - _cache_ts
+    global _open_fetch_date, _close_fetch_date
 
-    if not _cache:              # First start – fetch regardless of market hours
+    now_et = datetime.now(ET)
+    today  = now_et.date()
+
+    oh, om = map(int, MARKET_OPEN_STR.split(":"))
+    ch, cm = map(int, MARKET_CLOSE_STR.split(":"))
+    t_open        = now_et.replace(hour=oh, minute=om, second=0, microsecond=0)
+    t_open_plus30 = t_open + timedelta(seconds=30)
+    t_close       = now_et.replace(hour=ch, minute=cm, second=0, microsecond=0)
+
+    # ── 1. First start ────────────────────────────────────────────────────
+    if not _cache:
         _refresh_cache()
-    elif cache_age < REFRESH_INTERVAL:
-        pass                    # Cache is fresh – nothing to do
-    elif not is_market_open():
-        pass                    # Market closed – keep stale data, skip API
-    else:
-        _refresh_cache()        # Market open, cache expired – refresh
+        # Seed tracking dates so a mid-session restart doesn't re-fire these
+        if now_et.weekday() < 5 and now_et >= t_open_plus30:
+            _open_fetch_date = today
+        if now_et.weekday() < 5 and now_et >= t_close:
+            _close_fetch_date = today
+        return _cache
 
+    # ── 2. At-open fetch (09:30:30, once per weekday) ─────────────────────
+    if (now_et.weekday() < 5
+            and now_et >= t_open_plus30
+            and _open_fetch_date != today):
+        _refresh_cache()
+        _open_fetch_date = today
+        return _cache
+
+    # ── 3. Normal intraday refresh ────────────────────────────────────────
+    if is_market_open() and (time.time() - _cache_ts) >= REFRESH_INTERVAL:
+        _refresh_cache()
+        if now_et >= t_close:       # fired right at close boundary — count it
+            _close_fetch_date = today
+        return _cache
+
+    # ── 4. At-close fetch (16:00, once per weekday) ───────────────────────
+    if (now_et.weekday() < 5
+            and now_et >= t_close
+            and _close_fetch_date != today):
+        _refresh_cache()
+        _close_fetch_date = today
+        return _cache
+
+    # ── 5. Outside all active windows — serve cache as-is ─────────────────
     return _cache
 
 
